@@ -125,14 +125,27 @@
     }
   }
 
+  // плавно меняет громкость с той, что звучит сейчас
+  function fade(gain, to, seconds, context) {
+    const now = context.currentTime, from = gain.value;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(from, now);
+    gain.linearRampToValueAtTime(to, now + seconds);
+  }
+
+  const FADE_IN = 1.2, FADE_OUT = 1.2;
+  let sleep; // отложенная пауза после затухания
+
   function setMusic(value) {
     if (value === on) return;
     on = value;
     clearInterval(timer);
+    clearTimeout(sleep);
     if (on) {
       ctx = new AC();
       band = createBand(ctx);
-      band.master.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + 1.2);
+      band.master.gain.setValueAtTime(0, ctx.currentTime);
+      band.master.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + FADE_IN);
       bar = 0;
       nextTime = 0;
       ctx.resume();
@@ -140,9 +153,8 @@
       timer = setInterval(tick, 300);
     } else if (ctx) {
       const old = ctx;
-      band.master.gain.cancelScheduledValues(old.currentTime);
-      band.master.gain.setTargetAtTime(0, old.currentTime, 0.08);
-      setTimeout(() => old.close(), 400);
+      if (old.state === "running") fade(band.master.gain, 0, FADE_OUT, old);
+      setTimeout(() => old.close(), FADE_OUT * 1000 + 200);
       ctx = null;
     }
   }
@@ -150,9 +162,16 @@
   window.SynthMusic.set = setMusic;
   window.SynthMusic.isOn = () => on;
 
-  // свёрнутая вкладка не играет
+  // свёрнутая вкладка не играет: сначала плавно стихаем, потом пауза
   document.addEventListener("visibilitychange", () => {
     if (!ctx) return;
-    if (document.hidden) ctx.suspend(); else ctx.resume();
+    clearTimeout(sleep);
+    const current = ctx;
+    if (document.hidden) {
+      fade(band.master.gain, 0, FADE_OUT, current);
+      sleep = setTimeout(() => { if (document.hidden && ctx === current) current.suspend(); }, FADE_OUT * 1000 + 150);
+    } else {
+      current.resume().then(() => { if (ctx === current && !document.hidden) fade(band.master.gain, VOLUME, FADE_IN, current); });
+    }
   });
 })();
