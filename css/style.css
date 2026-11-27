@@ -27,6 +27,9 @@ a { color: var(--second); text-underline-offset: 3px; overflow-wrap: anywhere; }
 .error { color: var(--error); }
 .hello { margin: 12px 0 !important; }
 .kbd { color: var(--accent); font-weight: 700; }
+.hl { display: inline-block; padding: 0 .6ch; background: var(--second); color: var(--bg); font-weight: 700; line-height: 1.45; border-radius: 3px; }
+.exit { color: var(--text); }
+.help .exit { display: inline-block; margin-top: 8px; font-size: 14px; }
 .title { margin: 6px 0 !important; color: var(--second); font-weight: 700; }
 .echo span { color: var(--accent); }
 .note { max-width: 62ch; }

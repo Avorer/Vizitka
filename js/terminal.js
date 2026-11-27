@@ -35,6 +35,7 @@
   const link = (url, text) => el("a", { href: url, textContent: text || url, target: url.startsWith("mailto:") ? "" : "_blank", rel: "noopener" });
   // подсказка с названием команды: это просто текст, набирать нужно руками
   const kbd = text => el("b", { className: "kbd", textContent: text });
+  const hl = text => el("b", { className: "hl", textContent: text }); // яркая подсветка выхода
   const table = (rows, cls) => el("div", { className: "table " + (cls || "") }, ...rows.map(cells =>
     el("p", {}, ...cells.map(text => el("span", { textContent: text })))));
   const title = text => line("── " + text + " ──", "title");
@@ -104,6 +105,7 @@
     { name: "fullscreen", load: "Настройка режима экрана", instant: true, ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
       const active = Boolean(document.fullscreenElement);
       const want = /^(on|вкл)/.test(arg) ? true : /^(off|выкл)/.test(arg) ? false : !active;
+      keepFullscreen = want; // выключили командой — сами обратно не включаем
       if (want === active) return line(active ? "полный экран уже включён" : "полный экран уже выключен");
       if (want) {
         enterFullscreen();
@@ -116,6 +118,11 @@
     { name: "clear", services: ["Остановлена служба вывода терминала", "Очищен буфер экрана", "Удалена история сеанса на экране", "Запущена служба terminal.service"], ru: "очистить экран", alias: ["cls", "очистить"], run: wipe },
     { name: "help", load: "Загрузка списка команд", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
   ];
+
+  let keepFullscreen = true;
+  function restoreFullscreen() {
+    if (canFullscreen && keepFullscreen && !isFullscreen()) enterFullscreen();
+  }
 
   // на телефонах и там, где браузер не умеет полный экран, команды fullscreen нет
   const canFullscreen = finePointer && Boolean(document.fullscreenEnabled);
@@ -154,7 +161,7 @@
   function startOrder() {
     order = { step: 0 };
     title("ЗАКАЗ ВЕБ-ВЁРСТКИ");
-    line("Три коротких вопроса — и заявку можно отправить прямо отсюда. Выйти: cancel (отмена).");
+    line("Три коротких вопроса — и заявку можно отправить прямо отсюда.");
     ask();
   }
 
@@ -165,6 +172,8 @@
     } else if (order.step === 1) line("2/3. Опиши задачу в паре предложений:");
     else if (order.step === 2) line("3/3. Как тебя зовут и куда тебе ответить (Telegram или почта)?");
     else print(el("p", {}, "Отправить заявку? Напиши ", kbd("да"), " или ", kbd("нет"), "."));
+    print(el("p", { className: "exit" }, "Выйти из заказа: ", hl("cancel"), " или ", hl("отмена"),
+      finePointer ? el("span", { className: "dim", textContent: "  (Tab допишет)" }) : null));
     setMode();
   }
 
@@ -355,8 +364,11 @@
         setMode();
         line("Заказ отменён.");
       } else answer(text);
+      restoreFullscreen();
     } else {
       const found = parse(text);
+      // вызывается прямо из нажатия Enter: только так браузер разрешает полный экран
+      if (!(found && found.command.name === "fullscreen")) restoreFullscreen();
       if (found) return launch(found.command, found.arg, entry);
       else {
         line("avorer: " + text + ": команда не найдена", "error");
@@ -448,6 +460,12 @@
       setMode();
       setValue("");
       screen.scrollTop = screen.scrollHeight;
+    } else if (e.key === "Tab" && order && input.value && !e.shiftKey) {
+      e.preventDefault(); // курсор остаётся в строке
+      const start = input.value.toLowerCase().trimStart();
+      const words = ["cancel", "отмена"].concat(order.step === 3 ? ["да", "нет", "copy"] : []);
+      const match = words.find(w => w.startsWith(start));
+      if (match) setValue(match);
     } else if (e.key === "Tab" && input.value && !e.shiftKey && !order) {
       const start = normalize(input.value);
       const match = COMMANDS.find(c => c.name.startsWith(start)) || COMMANDS.find(c => normalize(c.ru).startsWith(start));
@@ -481,6 +499,11 @@
     if (finePointer) input.focus({ preventScroll: true });
   }
 
+  // в полном экране Esc может достаться только браузеру: выход из режима тоже закрывает игру
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && !modal.hidden) closeGame();
+  });
+
   // тап мимо поля закрывает игру на телефоне
   modal.addEventListener("click", e => {
     if (!finePointer && !e.target.closest(".field")) closeGame();
@@ -511,7 +534,12 @@
 
   /* ---------- полный экран на ПК ----------
      Сразу при открытии браузер этого не разрешает, поэтому включаем
-     с первым нажатием клавиши или кликом. Вышел по Esc — больше не навязываем. */
+     с первым нажатием клавиши или кликом. Вышел по Esc — вернётся со следующей
+     командой. Выключил командой fullscreen off — не навязываем. */
+  function isFullscreen() { // своим режимом или клавишей F11
+    return Boolean(document.fullscreenElement) || window.innerHeight >= window.screen.height;
+  }
+
   function enterFullscreen() {
     const request = document.documentElement.requestFullscreen();
     if (request) request.catch(() => {});
@@ -524,8 +552,7 @@
         if (e.ctrlKey || e.metaKey || e.altKey || !(e.key.length === 1 || e.key === "Enter")) return;
       } else if (e.target.closest("a")) return; // ссылки открываются как обычно
       events.forEach(n => document.removeEventListener(n, first, true));
-      const already = document.fullscreenElement || window.innerHeight >= window.screen.height; // например, уже нажали F11
-      if (!already) enterFullscreen();
+      if (!isFullscreen()) enterFullscreen();
     };
     events.forEach(n => document.addEventListener(n, first, true));
   }

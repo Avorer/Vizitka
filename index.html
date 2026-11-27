@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v10">
+  <link rel="stylesheet" href="css/style.css?v11">
 </head>
 <body>
   <div class="window" id="window">
@@ -35,8 +35,8 @@
         <canvas id="game" width="400" height="400" aria-label="Игровое поле"></canvas>
         <div id="overlay" class="overlay"><p id="overlay-text">НАЖМИ ПРОБЕЛ</p></div>
       </div>
-      <p class="help help-pc">стрелки / WASD — ход · пробел — старт и пауза · q или Esc — выход</p>
-      <p class="help help-touch">тап по полю — старт и пауза<br>свайп по полю — поворот<br>тап мимо поля — выход</p>
+      <p class="help help-pc">стрелки / WASD — ход · пробел — старт и пауза<br><span class="exit">выход из игры: <b class="hl">q</b> или <b class="hl">Esc</b></span></p>
+      <p class="help help-touch">тап по полю — старт и пауза<br>свайп по полю — поворот<br><span class="exit">тап мимо поля — выход</span></p>
     </div>
   </section>
 
@@ -44,6 +44,6 @@
   <script src="js/script.js?v6"></script>
   <script src="js/music.js?v3"></script>
   <script src="js/keys.js?v3"></script>
-  <script src="js/terminal.js?v6"></script>
+  <script src="js/terminal.js?v7"></script>
 </body>
 </html>
