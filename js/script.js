@@ -122,16 +122,17 @@
   }
 
   document.addEventListener("keydown", e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // не мешаем горячим клавишам браузера
+    // e.code означает саму клавишу, поэтому WASD работает и в русской раскладке
     const map = {
       ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
-      w: "up", s: "down", a: "left", d: "right",
-      W: "up", S: "down", A: "left", D: "right"
+      KeyW: "up", KeyS: "down", KeyA: "left", KeyD: "right"
     };
     if (e.code === "Space") { e.preventDefault(); toggle(); return; }
-    if (map[e.key]) {
+    if (map[e.code]) {
       e.preventDefault();
-      setDir(map[e.key]);
-      if (state === "idle") start();
+      if (state === "idle") start(); // сначала старт (он сбрасывает направление)
+      setDir(map[e.code]);
     }
   });
 
@@ -139,8 +140,8 @@
   document.querySelectorAll(".pad button").forEach(btn => {
     btn.addEventListener("pointerdown", e => {
       e.preventDefault();
-      setDir(btn.dataset.dir);
       if (state !== "play") start();
+      setDir(btn.dataset.dir);
     });
   });
 
@@ -161,8 +162,8 @@
     const dy = t.clientY - touchStart.y;
     touchStart = null;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return; // это тап, его обработает overlay
-    setDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
     if (state !== "play") start();
+    setDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
   });
 
   // ставим на паузу, если вкладку свернули
