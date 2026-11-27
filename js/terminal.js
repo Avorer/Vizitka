@@ -61,47 +61,47 @@
 
   /* ---------- команды ---------- */
   const COMMANDS = [
-    { name: "about", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
+    { name: "about", load: "Загрузка информации обо мне", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
       title("ОБО МНЕ");
       SITE.bio.forEach(t => line(t));
       print(el("p", {}, link(SITE.passport.url, SITE.passport.name + " ↗")));
       print(el("p", { className: "dim" }, "Мои работы: ", kbd("portfolio"), ". Нужен сайт: ", kbd("order"), "."));
     } },
-    { name: "portfolio", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
+    { name: "portfolio", load: "Загрузка портфолио", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
       title("ПОРТФОЛИО");
       print(el("ol", { className: "projects" }, ...SITE.projects.map(p =>
         el("li", {}, link(p.url, p.name + " ↗"), el("span", { textContent: p.about })))));
       print(el("p", { className: "dim" }, "Хочешь так же? Набери ", kbd("order"), "."));
     } },
-    { name: "order", ru: "заказать вёрстку", alias: ["заказ", "заказать", "верстка", "сайт", "buy"], run: startOrder },
-    { name: "contacts", ru: "контакты", alias: ["contact", "связь"], run() {
+    { name: "order", load: "Установка модуля заказа", ru: "заказать вёрстку", alias: ["заказ", "заказать", "верстка", "сайт", "buy"], run: startOrder },
+    { name: "contacts", load: "Загрузка контактной информации", ru: "контакты", alias: ["contact", "связь"], run() {
       title("КОНТАКТЫ");
       const list = el("ul", { className: "contacts" });
       contactList().forEach(c => list.append(el("li", {}, el("span", { textContent: c.label }), link(c.url, c.text))));
       print(list);
     } },
-    { name: "creative", ru: "про творчество", alias: ["творить", "творчество", "cat", "кот"], run() {
+    { name: "creative", load: "Загрузка вдохновения", ru: "про творчество", alias: ["творить", "творчество", "cat", "кот"], run() {
       title("ТВОРИ");
       print(el("pre", { className: "cat", textContent: " /\\_/\\\n( o.o )\n > ^ <" }));
       line("Хочешь творить — твори! Твоя фантазия безгранична! А если перегорел, то займись делом, которое тебе нравится: например, построй своему пушистому другу картонный замок или котокафешку. Только не мучай пушистика ;)", "note");
     } },
-    { name: "snake", ru: "игра «змейка»", alias: ["game", "play", "игра", "играть", "змейка"], run: openGame },
-    { name: "music", ru: "музыка on / off", alias: ["музыка"], run(arg) {
+    { name: "snake", services: ["Инициализация графического буфера", "Запущена служба input.service (клавиши и свайпы)", "Запущена служба score.service (счёт и рекорд)", "Запущен процесс ./snake"], ru: "игра «змейка»", alias: ["game", "play", "игра", "играть", "змейка"], run: openGame },
+    { name: "music", load: "Загрузка аудиомодуля", instant: true, ru: "музыка on / off", alias: ["музыка"], run(arg) {
       const music = window.SynthMusic;
       if (!music.set) return line("Этот браузер не умеет играть такую музыку.", "error");
       const want = /^(on|вкл)/.test(arg) ? true : /^(off|stop|выкл|стоп)/.test(arg) ? false : !music.isOn();
       music.set(want);
       print(want ? el("p", {}, "♫ играет synthwave… выключить: ", kbd("music off")) : el("p", { textContent: "музыка выключена" }));
     } },
-    { name: "theme", ru: "цвет терминала", alias: ["тема", "цвет", "color"], run(arg) {
+    { name: "theme", load: "Установка темы", ru: "цвет терминала", alias: ["тема", "цвет", "color"], run(arg) {
       const current = document.documentElement.dataset.theme || "green";
       const next = THEMES.includes(arg) ? arg : THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
       setTheme(next);
       line("тема: " + next);
       line("доступные: " + THEMES.join(", ") + " (пример: theme amber)", "dim");
     } },
-    { name: "copy", ru: "скопировать заявку", alias: ["копировать", "скопировать"], run: copyMessage },
-    { name: "fullscreen", ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
+    { name: "copy", load: "Копирование заявки", instant: true, ru: "скопировать заявку", alias: ["копировать", "скопировать"], run: copyMessage },
+    { name: "fullscreen", load: "Настройка режима экрана", instant: true, ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
       const active = Boolean(document.fullscreenElement);
       const want = /^(on|вкл)/.test(arg) ? true : /^(off|выкл)/.test(arg) ? false : !active;
       if (want === active) return line(active ? "полный экран уже включён" : "полный экран уже выключен");
@@ -113,8 +113,8 @@
         line("выхожу из полного экрана");
       }
     } },
-    { name: "clear", ru: "очистить экран", alias: ["cls", "очистить"], run() { out.textContent = ""; block = out; } },
-    { name: "help", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
+    { name: "clear", services: ["Остановлена служба вывода терминала", "Очищен буфер экрана", "Удалена история сеанса на экране", "Запущена служба terminal.service"], ru: "очистить экран", alias: ["cls", "очистить"], run: wipe },
+    { name: "help", load: "Загрузка списка команд", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
   ];
 
   // на телефонах и там, где браузер не умеет полный экран, команды fullscreen нет
@@ -240,6 +240,82 @@
     }
   }
 
+  /* ---------- очистка: шапка с приветствием остаётся ---------- */
+  let intro = 0; // сколько строк занимает шапка
+
+  function wipe() {
+    while (out.children.length > intro) out.lastElementChild.remove();
+    block = out;
+    screen.scrollTop = 0;
+  }
+
+  /* ---------- имитация загрузки и запуска служб ---------- */
+  let busy = null; // пока идёт «процесс», новые команды не принимаются
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = ms => new Promise(done => setTimeout(done, calm ? 0 : ms));
+  const toBottom = () => { screen.scrollTop = screen.scrollHeight; };
+
+  function setBusy(task) {
+    busy = task;
+    form.classList.toggle("busy", Boolean(task)); // строка ввода прячется, но клавиатура не закрывается
+  }
+
+  // полоса загрузки, как при установке модуля в PowerShell
+  async function progress(label, target, task) {
+    const CELLS = 20;
+    const bar = el("span", { className: "bar-cells" }), percent = el("span"), status = el("p", { className: "dim" });
+    const box = el("div", { className: "progress" }, el("p", { textContent: label }), el("p", {}, bar, percent), status);
+    target.append(box);
+    const stages = ["Подключение…", "Получение данных…", "Распаковка…", "Проверка…"];
+    let value = 0;
+    while (!task.cancelled) {
+      const cells = Math.round(value / 100 * CELLS);
+      bar.textContent = "[" + "█".repeat(cells) + "░".repeat(CELLS - cells) + "]";
+      percent.textContent = " " + String(value).padStart(3, " ") + "%";
+      status.textContent = value < 100 ? stages[Math.min(3, Math.floor(value / 26))] : "✓ Готово";
+      toBottom();
+      if (value === 100) break;
+      await wait(60 + Math.random() * 60);
+      value = Math.min(100, value + 9 + Math.floor(Math.random() * 14));
+    }
+    if (!task.cancelled) status.className = "ok";
+  }
+
+  // запуск служб по строчке, как при загрузке Linux
+  async function services(list, target, task) {
+    const box = el("div", { className: "services" });
+    target.append(box);
+    for (const name of list) {
+      const mark = el("span", { className: "dim", textContent: "[ .... ]" });
+      box.append(el("p", {}, mark, el("span", { textContent: name })));
+      toBottom();
+      await wait(110 + Math.random() * 170);
+      if (task.cancelled) return;
+      mark.className = "ok";
+      mark.textContent = "[  OK  ]";
+    }
+    await wait(300);
+  }
+
+  async function launch(command, arg, entry) {
+    const task = { cancelled: false };
+    setBusy(task);
+    let later = null;
+    if (command.instant) { // действие выполняем сразу, а ответ показываем после загрузки
+      later = el("div");
+      block = later;
+      command.run(arg);
+    }
+    if (command.services) await services(command.services, entry, task);
+    else await progress(command.load, entry, task);
+    if (task.cancelled) return;
+    setBusy(null);
+    block = entry;
+    if (later) entry.append(later);
+    else command.run(arg);
+    settle(entry);
+  }
+
   /* ---------- разбор ввода ---------- */
   // если забыли переключить раскладку: «рудз» → help, «gjhnajkbj» → портфолио
   const EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
@@ -281,7 +357,7 @@
       } else answer(text);
     } else {
       const found = parse(text);
-      if (found) found.command.run(found.arg);
+      if (found) return launch(found.command, found.arg, entry);
       else {
         line("avorer: " + text + ": команда не найдена", "error");
         print(el("p", {}, "Набери ", kbd("help"), ", чтобы увидеть список команд."));
@@ -331,6 +407,7 @@
 
   form.addEventListener("submit", e => {
     e.preventDefault();
+    if (busy) return;
     const text = input.value;
     setValue("");
     if (!text.trim()) { // пустой Enter, как в консоли, даёт новую строку приглашения
@@ -347,14 +424,23 @@
   });
 
   input.addEventListener("keydown", e => {
+    if (busy) {
+      if (e.ctrlKey && e.code === "KeyC") {
+        e.preventDefault();
+        busy.cancelled = true;
+        setBusy(null);
+        out.append(el("p", { className: "dim", textContent: "^C прервано" }));
+        toBottom();
+      }
+      return;
+    }
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
       cursor = Math.max(0, Math.min(history.length, cursor + (e.key === "ArrowUp" ? -1 : 1)));
       setValue(history[cursor] || "");
     } else if (e.ctrlKey && e.code === "KeyL") {
       e.preventDefault();
-      out.textContent = "";
-      block = out;
+      wipe();
     } else if (e.ctrlKey && e.code === "KeyC" && input.selectionStart === input.selectionEnd) {
       e.preventDefault();
       out.append(el("p", { className: "echo" }, el("span", { textContent: promptEl.textContent }), " " + input.value + "^C"));
@@ -466,6 +552,7 @@
   line("Сеанс открыт: " + now.toLocaleDateString("ru-RU") + " " + now.toLocaleTimeString("ru-RU"), "dim");
   print(el("p", { className: "hello" }, "Добро пожаловать! Набери ", kbd("help"), " (или «помощь») и нажми Enter."));
   if (!finePointer) line("Чтобы открыть клавиатуру, коснись экрана.", "dim");
+  intro = out.children.length;
   setMode();
   paint();
   showIp();
