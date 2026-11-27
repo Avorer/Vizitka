@@ -19,7 +19,7 @@ window.SITE = {
   projects: [
     { name: "Сайт команды РАСХОД", about: "Лидерборд, гонщики и новости", url: "https://команда-расход.рф" },
     { name: "Набор в РАСХОД", about: "Страница набора в команду", url: "https://avorer.github.io/RASHOD-join/" },
-    { name: "Эта визитка", about: "Сайт-терминал: ты сейчас в нём", url: "https://github.com/Avorer/VizitkaRofl" }
+    { name: "Эта визитка", about: "Сайт-терминал: ты сейчас в нём", url: "https://github.com/Avorer/Vizitka" }
   ],
 
   // что можно выбрать при заказе
