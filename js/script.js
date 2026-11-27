@@ -1,5 +1,6 @@
 (() => {
-  if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) {
+  const isTouch = window.matchMedia("(pointer: coarse)").matches;
+  if (isTouch) {
     document.documentElement.classList.add("touch");
   }
 
@@ -113,7 +114,7 @@
     state = "over";
     clearInterval(timer);
     if (score > best) { best = score; bestEl.textContent = best; }
-    showOverlay("GAME OVER<br><small>ПРОБЕЛ — ЕЩЁ РАЗ</small>");
+    showOverlay("GAME OVER<br><small>" + (isTouch ? "ТАПНИ — ЕЩЁ РАЗ" : "ПРОБЕЛ — ЕЩЁ РАЗ") + "</small>");
   }
 
   function toggle() {
@@ -170,5 +171,5 @@
   });
 
   reset();
-  showOverlay("НАЖМИ ПРОБЕЛ");
+  showOverlay(isTouch ? "ТАПНИ,<br>ЧТОБЫ ИГРАТЬ" : "НАЖМИ ПРОБЕЛ");
 })();
