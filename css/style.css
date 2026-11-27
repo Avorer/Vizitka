@@ -20,6 +20,7 @@ a { color: var(--second); text-underline-offset: 3px; overflow-wrap: anywhere; }
 #out p { margin: 0; }
 .entry { margin: 0 0 12px; }
 .banner { font-family: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: clamp(7px, 2.5vw, 17px); line-height: 1.15; color: var(--accent); text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); margin-bottom: 10px; overflow: hidden; }
+.banner-x { color: #9e1b32; text-shadow: 0 0 12px rgba(158, 27, 50, .65); }
 .sub { color: var(--dim); }
 .ok { color: var(--accent); }
 .dim { color: var(--dim); font-size: .9em; }
@@ -80,7 +81,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 
 @media (max-width: 600px) {
   body { font-size: 14px; }
-  .banner { font-size: calc((100vw - 34px) / 22); }
+  .banner { font-size: calc((100vw - 34px) / 25.5); }
   .contacts li { grid-template-columns: 1fr; gap: 0; padding: 3px 0; }
 }
 /* телефон боком: поле слева, подписи справа */

@@ -15,7 +15,8 @@
   const at = document.getElementById("at");
   const after = document.getElementById("after");
   const finePointer = window.matchMedia("(pointer: fine)").matches;
-  const PROMPT = "гость@avorer:~$";
+  let user = "гость"; // вместо него подставится IP посетителя
+  const prompt = () => user + "@avorer:~$";
   const THEMES = ["green", "amber", "white", "synth"];
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -45,11 +46,15 @@
       V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
       O: [" ███ ", "█   █", "█   █", "█   █", " ███ "],
       R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
-      E: ["█████", "█    ", "████ ", "█    ", "█████"]
+      E: ["█████", "█    ", "████ ", "█    ", "█████"],
+      X: ["█   █", " █ █ ", "  █  ", " █ █ ", "█   █"]
     };
-    const rows = [0, 1, 2, 3, 4].map(i => [..."AVORER"].map(c => glyphs[c][i]).join(" "));
-    const pre = el("pre", { className: "banner", textContent: rows.join("\n") });
-    pre.setAttribute("aria-label", "AVORER");
+    const pre = el("pre", { className: "banner" });
+    [0, 1, 2, 3, 4].forEach(i => { // X красится отдельно и от темы не зависит
+      pre.append([..."AVORER"].map(c => glyphs[c][i]).join(" ") + " ",
+        el("span", { className: "banner-x", textContent: glyphs.X[i] }), i < 4 ? "\n" : "");
+    });
+    pre.setAttribute("aria-label", "AVORERX");
     pre.setAttribute("role", "img");
     return pre;
   }
@@ -248,7 +253,7 @@
     text = text.trim();
     if (!text) return;
     const entry = el("div", { className: "entry" });
-    entry.append(el("p", { className: "echo" }, el("span", { textContent: order ? "заказ >" : PROMPT }), " " + text));
+    entry.append(el("p", { className: "echo" }, el("span", { textContent: order ? "заказ >" : prompt() }), " " + text));
     out.append(entry);
     block = entry;
     const word = normalize(text);
@@ -297,7 +302,7 @@
   }
 
   function setMode() {
-    promptEl.textContent = order ? "заказ >" : PROMPT;
+    promptEl.textContent = order ? "заказ >" : prompt();
   }
 
   const history = [];
@@ -402,6 +407,20 @@
     document.querySelector('meta[name="theme-color"]').content = bg;
   }
 
+  /* ---------- IP посетителя в строке приглашения ----------
+     Только показывается на его же экране: сайт его не сохраняет и в заявку не добавляет.
+     Узнать IP без внешнего сервиса страница не может, поэтому спрашиваем у ipify.
+     Если сервис недоступен или заблокирован, остаётся «гость». */
+  async function showIp() {
+    try {
+      const response = await fetch("https://api.ipify.org?format=json", { cache: "no-store", referrerPolicy: "no-referrer" });
+      const { ip } = await response.json();
+      if (!response.ok || !/^[0-9a-f.:]{3,45}$/i.test(ip)) return;
+      user = ip;
+      setMode();
+    } catch (e) {}
+  }
+
   /* ---------- приветствие ---------- */
   setTheme(THEMES.includes(store.get("theme")) ? store.get("theme") : "green");
   print(banner());
@@ -412,5 +431,6 @@
   if (!finePointer) line("Чтобы открыть клавиатуру, коснись экрана.", "dim");
   setMode();
   paint();
+  showIp();
   if (finePointer) input.focus({ preventScroll: true });
 })();
