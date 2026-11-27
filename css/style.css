@@ -75,6 +75,12 @@ body { min-height: 100vh; color: var(--text); font: 500 1rem/1.6 var(--body); te
 .hud span { display: flex; align-items: center; gap: 10px; }
 .hud b { color: var(--amber); font-weight: 400; font-size: 1rem; text-shadow: 0 0 10px var(--orange); }
 
+.hud { align-items: center; }
+.music { flex: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 5px 10px; border: 2px solid var(--purple); border-radius: 999px; background: #14031f; color: var(--violet); font: 400 .6rem/1.2 var(--pixel); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.music[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 12px rgba(255, 138, 31, .6); }
+.music:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (max-width: 360px) { .hud span { gap: 5px; } .music { padding: 4px 7px; font-size: .52rem; } }
+
 .screen { position: relative; padding: 8px; background: #000; border: 3px solid #0d0216; border-radius: 16px; box-shadow: 0 0 0 3px var(--purple), inset 0 0 24px rgba(139, 47, 201, .7); }
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: #0a0214; image-rendering: pixelated; touch-action: none; }
 .screen::after { content: ""; position: absolute; inset: 8px; border-radius: 6px; pointer-events: none;
