@@ -112,15 +112,11 @@
 
   window.SynthMusic = { createBand, BAR, VOLUME };
 
-  /* ---------- кнопка включения ---------- */
-  const button = document.getElementById("music");
+  /* ---------- включение командой music ---------- */
   const AC = window.AudioContext || window.webkitAudioContext;
-  if (!button) return;
-  if (!AC) { button.hidden = true; return; }
+  if (!AC) return;
 
   let ctx, band, timer, bar = 0, nextTime = 0, on = false;
-  const save = v => { try { localStorage.setItem("music", v); } catch (e) {} };
-  const saved = () => { try { return localStorage.getItem("music"); } catch (e) { return null; } };
 
   function tick() { // заранее ставим в очередь ближайшие такты
     while (nextTime < ctx.currentTime + 1.5) {
@@ -130,9 +126,8 @@
   }
 
   function setMusic(value) {
+    if (value === on) return;
     on = value;
-    button.setAttribute("aria-pressed", String(on));
-    button.querySelector("span").textContent = on ? "ВКЛ" : "ВЫКЛ";
     clearInterval(timer);
     if (on) {
       ctx = new AC();
@@ -152,25 +147,12 @@
     }
   }
 
-  button.addEventListener("click", () => {
-    setMusic(!on);
-    save(on ? "on" : "off");
-    button.blur(); // чтобы пробел и дальше управлял игрой
-  });
+  window.SynthMusic.set = setMusic;
+  window.SynthMusic.isOn = () => on;
 
   // свёрнутая вкладка не играет
   document.addEventListener("visibilitychange", () => {
     if (!ctx) return;
     if (document.hidden) ctx.suspend(); else ctx.resume();
   });
-
-  // если в прошлый раз музыку включали, запускаем с первым действием на странице
-  if (saved() === "on") {
-    const events = ["pointerup", "keydown"];
-    const resume = e => {
-      events.forEach(n => document.removeEventListener(n, resume, true));
-      if (!on && !(e.target instanceof Node && button.contains(e.target))) setMusic(true);
-    };
-    events.forEach(n => document.addEventListener(n, resume, true));
-  }
 })();

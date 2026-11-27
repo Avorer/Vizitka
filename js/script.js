@@ -137,15 +137,6 @@
     }
   });
 
-  // экранные кнопки: pointerdown реагирует быстрее, чем click
-  document.querySelectorAll(".pad button").forEach(btn => {
-    btn.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      if (state !== "play") start();
-      setDir(btn.dataset.dir);
-    });
-  });
-
   overlay.addEventListener("click", toggle);
 
   // свайпы по полю

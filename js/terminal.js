@@ -9,10 +9,11 @@
   const form = document.getElementById("form");
   const input = document.getElementById("cmd");
   const promptEl = document.getElementById("prompt");
-  const chips = document.getElementById("chips");
   const modal = document.getElementById("modal");
   const windowEl = document.getElementById("window");
-  const musicButton = document.getElementById("music");
+  const before = document.getElementById("before");
+  const at = document.getElementById("at");
+  const after = document.getElementById("after");
   const finePointer = window.matchMedia("(pointer: fine)").matches;
   const PROMPT = "гость@avorer:~$";
   const THEMES = ["green", "amber", "white", "synth"];
@@ -31,11 +32,10 @@
   const print = (...nodes) => { block.append(...nodes); };
   const line = (text, cls) => print(el("p", { className: cls || "", textContent: text }));
   const link = (url, text) => el("a", { href: url, textContent: text || url, target: url.startsWith("mailto:") ? "" : "_blank", rel: "noopener" });
-  const run = (text, label, cls) => {
-    const b = el("button", { type: "button", className: cls || "run", textContent: label ?? text });
-    b.dataset.run = text;
-    return b;
-  };
+  // подсказка с названием команды: это просто текст, набирать нужно руками
+  const kbd = text => el("b", { className: "kbd", textContent: text });
+  const table = (rows, cls) => el("div", { className: "table " + (cls || "") }, ...rows.map(cells =>
+    el("p", {}, ...cells.map(text => el("span", { textContent: text })))));
   const title = text => line("── " + text + " ──", "title");
 
   /* ---------- крупная надпись из символов ---------- */
@@ -59,13 +59,13 @@
     { name: "about", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
       title("ОБО МНЕ");
       SITE.bio.forEach(t => line(t));
-      print(el("p", {}, "Мои работы: ", run("portfolio"), "   Нужен сайт: ", run("order")));
+      print(el("p", { className: "dim" }, "Мои работы: ", kbd("portfolio"), ". Нужен сайт: ", kbd("order"), "."));
     } },
     { name: "portfolio", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
       title("ПОРТФОЛИО");
       print(el("ol", { className: "projects" }, ...SITE.projects.map(p =>
         el("li", {}, link(p.url, p.name + " ↗"), el("span", { textContent: p.about })))));
-      print(el("p", {}, "Хочешь так же? ", run("order")));
+      print(el("p", { className: "dim" }, "Хочешь так же? Набери ", kbd("order"), "."));
     } },
     { name: "order", ru: "заказать вёрстку", alias: ["заказ", "заказать", "верстка", "сайт", "buy"], run: startOrder },
     { name: "contacts", ru: "контакты", alias: ["contact", "связь"], run() {
@@ -80,30 +80,30 @@
       line("Хочешь творить — твори! Твоя фантазия безгранична! А если перегорел, то займись делом, которое тебе нравится: например, построй своему пушистому другу картонный замок или котокафешку. Только не мучай пушистика ;)", "note");
     } },
     { name: "snake", ru: "игра «змейка»", alias: ["game", "play", "игра", "играть", "змейка"], run: openGame },
-    { name: "music", ru: "музыка вкл / выкл", alias: ["музыка"], run(arg) {
-      if (musicButton.hidden) return line("Этот браузер не умеет играть такую музыку.", "error");
-      const on = musicButton.getAttribute("aria-pressed") === "true";
-      const want = /^(on|вкл)/.test(arg) ? true : /^(off|stop|выкл|стоп)/.test(arg) ? false : !on;
-      if (want !== on) musicButton.click();
-      line(want ? "♫ Музыка включена. Выключить: music off" : "Музыка выключена.");
+    { name: "music", ru: "музыка on / off", alias: ["музыка"], run(arg) {
+      const music = window.SynthMusic;
+      if (!music.set) return line("Этот браузер не умеет играть такую музыку.", "error");
+      const want = /^(on|вкл)/.test(arg) ? true : /^(off|stop|выкл|стоп)/.test(arg) ? false : !music.isOn();
+      music.set(want);
+      print(want ? el("p", {}, "♫ играет synthwave… выключить: ", kbd("music off")) : el("p", { textContent: "музыка выключена" }));
     } },
     { name: "theme", ru: "цвет терминала", alias: ["тема", "цвет", "color"], run(arg) {
       const current = document.documentElement.dataset.theme || "green";
       const next = THEMES.includes(arg) ? arg : THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
       setTheme(next);
-      print(el("p", {}, "Тема: " + next + ". Все темы: ", ...THEMES.flatMap(t => [run("theme " + t, t), " "])));
+      line("тема: " + next);
+      line("доступные: " + THEMES.join(", ") + " (пример: theme amber)", "dim");
     } },
+    { name: "copy", ru: "скопировать заявку", alias: ["копировать", "скопировать"], run: copyMessage },
     { name: "clear", ru: "очистить экран", alias: ["cls", "очистить"], run() { out.textContent = ""; block = out; } },
     { name: "help", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
   ];
 
   function help() {
-    line("Нажми на команду или напиши её: по-английски, по-русски или номером.");
-    print(el("div", { className: "menu" }, ...COMMANDS.map((c, i) => {
-      const b = run(c.name, "", "item");
-      b.append(el("i", { textContent: String(i + 1).padStart(2, " ") }), el("b", { textContent: c.name }), el("span", { textContent: c.ru }));
-      return b;
-    })));
+    line("Доступные команды:");
+    print(table(COMMANDS.map((c, i) => [String(i + 1), c.name, c.ru]), "commands"));
+    line("Набери команду и нажми Enter. Можно по-английски, по-русски или номером.", "dim");
+    if (finePointer) line("Tab — дописать, ↑ ↓ — история, Ctrl+L — очистить.", "dim");
   }
 
   function contactList() {
@@ -118,22 +118,28 @@
 
   /* ---------- заказ: три вопроса, на выходе готовое сообщение ---------- */
   let order = null;
+  let message = "";
+
+  function copyMessage() {
+    if (!message) return print(el("p", {}, "Копировать пока нечего. Сначала оформи заявку: ", kbd("order")));
+    const target = block; // ответ придёт позже, пишем его под этой же командой
+    const done = ok => target.append(el("p", { className: ok ? "ok" : "error",
+      textContent: ok ? "заявка скопирована в буфер обмена" : "не получилось скопировать: выдели текст заявки вручную" }));
+    if (navigator.clipboard) navigator.clipboard.writeText(message).then(() => done(true), () => done(false));
+    else done(false);
+  }
 
   function startOrder() {
     order = { step: 0 };
     title("ЗАКАЗ ВЕБ-ВЁРСТКИ");
-    line("Три коротких вопроса — и получишь готовое сообщение. Выйти: cancel (отмена).");
+    line("Три коротких вопроса — и получишь готовую заявку. Выйти: cancel (отмена).");
     ask();
   }
 
   function ask() {
     if (order.step === 0) {
-      line("1/3. Что нужно? Выбери номер или напиши своими словами:");
-      print(el("div", { className: "menu menu-options" }, ...SITE.services.map((s, i) => {
-        const b = run(String(i + 1), "", "item");
-        b.append(el("i", { textContent: String(i + 1) }), el("span", { textContent: s }));
-        return b;
-      })));
+      line("1/3. Что нужно? Введи номер или напиши своими словами:");
+      print(table(SITE.services.map((s, i) => [String(i + 1), s]), "options"));
     } else if (order.step === 1) line("2/3. Опиши задачу в паре предложений:");
     else line("3/3. Как тебя зовут и куда тебе ответить?");
     setMode();
@@ -147,29 +153,20 @@
     order.step++;
     if (order.step < 3) return ask();
 
-    const message = "Привет! Хочу заказать вёрстку.\nЧто нужно: " + order.type + "\nЗадача: " + order.task + "\nОтветить: " + order.who;
+    message = "Привет! Хочу заказать вёрстку.\nЧто нужно: " + order.type + "\nЗадача: " + order.task + "\nОтветить: " + order.who;
     order = null;
     setMode();
-    line("Готово! Вот твоё сообщение:", "ok");
+    line("Готово! Вот твоя заявка:", "ok");
     print(el("pre", { className: "message", textContent: message }));
-    const copy = el("button", { type: "button", className: "action", textContent: "Скопировать" });
-    copy.addEventListener("click", () => {
-      const done = ok => { copy.textContent = ok ? "Скопировано ✓" : "Выдели текст и скопируй вручную"; };
-      if (navigator.clipboard) navigator.clipboard.writeText(message).then(() => done(true), () => done(false));
-      else done(false);
-    });
-    const row = el("div", { className: "actions" }, copy);
+    print(el("p", {}, "Набери ", kbd("copy"), ", чтобы скопировать её."));
     const direct = contactList().filter(c => c.order);
     direct.forEach(c => {
       const url = c.url.startsWith("mailto:") ? c.url + "?subject=" + encodeURIComponent("Заказ вёрстки") + "&body=" + encodeURIComponent(message) : c.url;
-      const a = link(url, "Открыть: " + c.label);
-      a.className = "action";
-      row.append(a);
+      print(el("p", {}, "Отправить (" + c.label + "): ", link(url, c.text)));
     });
-    print(row);
     line(direct.length
-      ? "Сообщение само никуда не отправляется: скопируй его и пришли мне."
-      : "Сообщение само никуда не отправляется. Личный контакт для заказов скоро появится здесь.", "dim");
+      ? "Заявка сама никуда не отправляется: скопируй её и пришли мне."
+      : "Заявка сама никуда не отправляется. Личный контакт для заказов скоро появится здесь.", "dim");
   }
 
   /* ---------- разбор ввода ---------- */
@@ -215,23 +212,42 @@
       const found = parse(text);
       if (found) found.command.run(found.arg);
       else {
-        line("Команда не найдена: " + text, "error");
-        print(el("p", {}, "Список команд: ", run("help")));
+        line("avorer: " + text + ": команда не найдена", "error");
+        print(el("p", {}, "Набери ", kbd("help"), ", чтобы увидеть список команд."));
       }
     }
-    // показываем начало ответа, а не его хвост
-    if (entry.isConnected) screen.scrollTop += entry.getBoundingClientRect().top - screen.getBoundingClientRect().top - 12;
-    else screen.scrollTop = 0;
+    settle(entry);
   }
 
-  /* ---------- кнопки внизу и строка ввода ---------- */
+  // как в консоли, едем вниз; но если ответ выше экрана, показываем его начало
+  function settle(entry) {
+    if (!entry.isConnected) { screen.scrollTop = 0; return; }
+    const top = screen.scrollTop + entry.getBoundingClientRect().top - screen.getBoundingClientRect().top - 12;
+    screen.scrollTop = Math.min(top, screen.scrollHeight);
+    if (entry.offsetHeight + form.offsetHeight + 40 < screen.clientHeight) screen.scrollTop = screen.scrollHeight;
+  }
+
+  /* ---------- строка ввода с блочным курсором ---------- */
+  function paint() {
+    const v = input.value;
+    const pos = document.activeElement === input ? (input.selectionStart ?? v.length) : v.length;
+    before.textContent = v.slice(0, pos);
+    at.textContent = v.charAt(pos) || " ";
+    after.textContent = v.slice(pos + 1);
+    form.classList.toggle("focus", document.activeElement === input);
+  }
+  ["input", "keyup", "click", "focus", "blur"].forEach(n => input.addEventListener(n, paint));
+  document.addEventListener("selectionchange", paint);
+  input.addEventListener("input", () => { screen.scrollTop = screen.scrollHeight; });
+
+  function setValue(v) {
+    input.value = v;
+    input.setSelectionRange(v.length, v.length);
+    paint();
+  }
+
   function setMode() {
     promptEl.textContent = order ? "заказ >" : PROMPT;
-    input.placeholder = order ? "твой ответ" : "напиши help";
-    const items = order
-      ? [["cancel", "✕ отмена"]]
-      : [["help", "помощь"], ["about", "обо мне"], ["portfolio", "портфолио"], ["order", "заказать"], ["contacts", "контакты"], ["snake", "змейка"]];
-    chips.replaceChildren(...items.map(([cmd, label]) => run(cmd, label, "chip")));
   }
 
   const history = [];
@@ -245,49 +261,57 @@
   form.addEventListener("submit", e => {
     e.preventDefault();
     const text = input.value;
-    input.value = "";
+    setValue("");
+    if (!text.trim()) { // пустой Enter, как в консоли, даёт новую строку приглашения
+      out.append(el("p", { className: "echo" }, el("span", { textContent: promptEl.textContent })));
+      screen.scrollTop = screen.scrollHeight;
+      return;
+    }
     submit(text);
   });
 
-  document.addEventListener("click", e => {
-    const target = e.target.closest("[data-run]");
-    if (!target) return;
-    submit(target.dataset.run);
-    if (finePointer && modal.hidden) input.focus({ preventScroll: true });
-  });
-
-  // клик по пустому месту ставит курсор в строку (на телефоне не трогаем: выскочит клавиатура)
+  // нажатие в любом месте ставит курсор в строку; на телефоне так открывается клавиатура
   screen.addEventListener("click", e => {
-    if (finePointer && !e.target.closest("a, button, input") && !String(getSelection())) input.focus({ preventScroll: true });
+    if (!e.target.closest("a, input") && !String(getSelection())) input.focus({ preventScroll: true });
   });
 
   input.addEventListener("keydown", e => {
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
       cursor = Math.max(0, Math.min(history.length, cursor + (e.key === "ArrowUp" ? -1 : 1)));
-      input.value = history[cursor] || "";
+      setValue(history[cursor] || "");
+    } else if (e.ctrlKey && e.code === "KeyL") {
+      e.preventDefault();
+      out.textContent = "";
+      block = out;
+    } else if (e.ctrlKey && e.code === "KeyC" && input.selectionStart === input.selectionEnd) {
+      e.preventDefault();
+      out.append(el("p", { className: "echo" }, el("span", { textContent: promptEl.textContent }), " " + input.value + "^C"));
+      order = null;
+      setMode();
+      setValue("");
+      screen.scrollTop = screen.scrollHeight;
     } else if (e.key === "Tab" && input.value && !e.shiftKey && !order) {
       const start = normalize(input.value);
       const match = COMMANDS.find(c => c.name.startsWith(start)) || COMMANDS.find(c => normalize(c.ru).startsWith(start));
-      if (match && match.name !== start) { e.preventDefault(); input.value = match.name; }
+      if (match && match.name !== start) { e.preventDefault(); setValue(match.name); }
     }
   });
 
   // печатать можно сразу, даже если курсор не в строке
   document.addEventListener("keydown", e => {
     if (!modal.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key.length === 1 && e.key !== " " && !e.target.closest("input, button, a")) input.focus();
+    if (e.key.length === 1 && e.key !== " " && !e.target.closest("input, a")) input.focus();
   });
 
-  /* ---------- окно игры ---------- */
+  /* ---------- «программа» snake ---------- */
   function openGame() {
-    line("Запускаю ./snake … выйти: Esc или кнопка «выйти».");
+    line("запуск ./snake …");
     modal.hidden = false;
     windowEl.inert = true;
     document.body.classList.add("game-open");
-    input.blur();
-    document.getElementById("close").focus();
-    document.getElementById("close").blur();
+    input.blur(); // убираем клавиатуру телефона
+    modal.focus({ preventScroll: true });
   }
 
   function closeGame() {
@@ -295,11 +319,31 @@
     windowEl.inert = false;
     document.body.classList.remove("game-open");
     document.dispatchEvent(new Event("game:close"));
+    out.append(el("p", { className: "dim", textContent: "snake: выход, счёт " + document.getElementById("score").textContent }));
+    screen.scrollTop = screen.scrollHeight;
     if (finePointer) input.focus({ preventScroll: true });
   }
 
-  document.getElementById("close").addEventListener("click", closeGame);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !modal.hidden) closeGame(); });
+  // тап мимо поля закрывает игру на телефоне
+  modal.addEventListener("click", e => {
+    if (!finePointer && !e.target.closest(".field")) closeGame();
+  });
+  document.addEventListener("keydown", e => {
+    if (modal.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "Escape" || e.code === "KeyQ") { e.preventDefault(); closeGame(); }
+  });
+
+  // клавиатура телефона не должна закрывать строку ввода
+  if (window.visualViewport) {
+    const fit = () => {
+      if (visualViewport.scale > 1.01) return;
+      const typing = document.activeElement === input;
+      windowEl.style.height = visualViewport.height + "px";
+      window.scrollTo(0, 0);
+      if (typing) screen.scrollTop = screen.scrollHeight;
+    };
+    visualViewport.addEventListener("resize", fit);
+  }
 
   function setTheme(name) {
     document.documentElement.dataset.theme = name;
@@ -312,8 +356,11 @@
   setTheme(THEMES.includes(store.get("theme")) ? store.get("theme") : "green");
   print(banner());
   line("AvorerInc :: портфолио и веб-вёрстка", "sub");
-  line("Добро пожаловать! Это сайт-терминал.", "ok");
-  help();
+  const now = new Date();
+  line("Сеанс открыт: " + now.toLocaleDateString("ru-RU") + " " + now.toLocaleTimeString("ru-RU"), "dim");
+  print(el("p", { className: "hello" }, "Добро пожаловать! Набери ", kbd("help"), " (или «помощь») и нажми Enter."));
+  if (!finePointer) line("Чтобы открыть клавиатуру, коснись экрана.", "dim");
   setMode();
+  paint();
   if (finePointer) input.focus({ preventScroll: true });
 })();

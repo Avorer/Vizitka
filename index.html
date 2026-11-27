@@ -9,60 +9,40 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v5">
+  <link rel="stylesheet" href="css/style.css?v6">
 </head>
 <body>
   <div class="window" id="window">
-    <header class="bar">
-      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <h1>гость@avorer: ~</h1>
-      <button id="music" class="music" type="button" aria-pressed="false" aria-label="Музыка">♫ <span>ВЫКЛ</span></button>
-    </header>
-
     <main class="screen" id="screen">
+      <h1 class="sr">AvorerInc: портфолио и заказ веб-вёрстки</h1>
       <div id="out" role="log" aria-live="polite"></div>
       <noscript>
         <p>Для терминала нужен JavaScript. Проекты:</p>
         <p><a href="https://команда-расход.рф">Сайт команды РАСХОД</a><br><a href="https://avorer.github.io/RASHOD-join/">Набор в РАСХОД</a><br><a href="https://github.com/Avorer">GitHub</a></p>
       </noscript>
       <form class="line" id="form" autocomplete="off">
-        <label for="cmd" id="prompt">гость@avorer:~$</label>
-        <input id="cmd" type="text" enterkeyhint="send" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="напиши help">
+        <label for="cmd" id="prompt">гость@avorer:~$</label><span class="typed" aria-hidden="true"><span id="before"></span><span class="cursor" id="at"> </span><span id="after"></span></span>
+        <input id="cmd" type="text" enterkeyhint="send" autocapitalize="none" autocorrect="off" spellcheck="false">
       </form>
     </main>
-
-    <nav class="chips" id="chips" aria-label="Быстрые команды"></nav>
   </div>
 
-  <!-- окно игры: открывается командой snake -->
-  <section class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Игра «Змейка»" hidden>
+  <!-- «программа» snake: запускается командой snake -->
+  <section class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Игра «Змейка»" tabindex="-1" hidden>
     <div class="game">
-      <div class="bar">
-        <h2>./snake</h2>
-        <button type="button" class="close" id="close">выйти ✕</button>
-      </div>
-      <div class="hud">
-        <span>СЧЁТ <b id="score">0</b></span>
-        <span>РЕКОРД <b id="best">0</b></span>
-      </div>
+      <p class="hud"><span>./snake</span><span>счёт: <b id="score">0</b></span><span>рекорд: <b id="best">0</b></span></p>
       <div class="field">
         <canvas id="game" width="400" height="400" aria-label="Игровое поле"></canvas>
         <div id="overlay" class="overlay"><p id="overlay-text">НАЖМИ ПРОБЕЛ</p></div>
       </div>
-      <p class="help help-pc">Стрелки или WASD — управление · Пробел — старт / пауза · Esc — выход</p>
-      <p class="help help-touch">Свайпай по полю или жми кнопки</p>
-      <div class="pad" aria-label="Кнопки управления">
-        <button data-dir="up" class="b-up" aria-label="Вверх">▲</button>
-        <button data-dir="left" class="b-left" aria-label="Влево">◀</button>
-        <button data-dir="down" class="b-down" aria-label="Вниз">▼</button>
-        <button data-dir="right" class="b-right" aria-label="Вправо">▶</button>
-      </div>
+      <p class="help help-pc">стрелки / WASD — ход · пробел — старт и пауза · q или Esc — выход</p>
+      <p class="help help-touch">тап по полю — старт и пауза<br>свайп по полю — поворот<br>тап мимо поля — выход</p>
     </div>
   </section>
 
-  <script src="js/config.js?v1"></script>
-  <script src="js/script.js?v5"></script>
-  <script src="js/music.js?v1"></script>
-  <script src="js/terminal.js?v1"></script>
+  <script src="js/config.js?v2"></script>
+  <script src="js/script.js?v6"></script>
+  <script src="js/music.js?v2"></script>
+  <script src="js/terminal.js?v2"></script>
 </body>
 </html>
