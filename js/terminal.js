@@ -101,9 +101,25 @@
       line("доступные: " + THEMES.join(", ") + " (пример: theme amber)", "dim");
     } },
     { name: "copy", ru: "скопировать заявку", alias: ["копировать", "скопировать"], run: copyMessage },
+    { name: "fullscreen", ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
+      const active = Boolean(document.fullscreenElement);
+      const want = /^(on|вкл)/.test(arg) ? true : /^(off|выкл)/.test(arg) ? false : !active;
+      if (want === active) return line(active ? "полный экран уже включён" : "полный экран уже выключен");
+      if (want) {
+        enterFullscreen();
+        line("включаю полный экран… выйти: Esc");
+      } else {
+        document.exitFullscreen().catch(() => {});
+        line("выхожу из полного экрана");
+      }
+    } },
     { name: "clear", ru: "очистить экран", alias: ["cls", "очистить"], run() { out.textContent = ""; block = out; } },
     { name: "help", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
   ];
+
+  // на телефонах и там, где браузер не умеет полный экран, команды fullscreen нет
+  const canFullscreen = finePointer && Boolean(document.fullscreenEnabled);
+  if (!canFullscreen) COMMANDS.splice(COMMANDS.findIndex(c => c.pc), 1);
 
   function help() {
     line("Доступные команды:");
@@ -405,6 +421,27 @@
     store.set("theme", name);
     const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
     document.querySelector('meta[name="theme-color"]').content = bg;
+  }
+
+  /* ---------- полный экран на ПК ----------
+     Сразу при открытии браузер этого не разрешает, поэтому включаем
+     с первым нажатием клавиши или кликом. Вышел по Esc — больше не навязываем. */
+  function enterFullscreen() {
+    const request = document.documentElement.requestFullscreen();
+    if (request) request.catch(() => {});
+  }
+
+  if (canFullscreen) {
+    const events = ["keydown", "click"];
+    const first = e => {
+      if (e.type === "keydown") { // служебные клавиши и сочетания не считаются
+        if (e.ctrlKey || e.metaKey || e.altKey || !(e.key.length === 1 || e.key === "Enter")) return;
+      } else if (e.target.closest("a")) return; // ссылки открываются как обычно
+      events.forEach(n => document.removeEventListener(n, first, true));
+      const already = document.fullscreenElement || window.innerHeight >= window.screen.height; // например, уже нажали F11
+      if (!already) enterFullscreen();
+    };
+    events.forEach(n => document.addEventListener(n, first, true));
   }
 
   /* ---------- IP посетителя в строке приглашения ----------

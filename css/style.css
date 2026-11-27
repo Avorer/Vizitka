@@ -34,7 +34,7 @@ a { color: var(--second); text-underline-offset: 3px; overflow-wrap: anywhere; }
 
 .table { margin: 4px 0 6px; }
 .table p { display: grid; column-gap: 2ch; }
-.table.commands p { grid-template-columns: 2ch 10ch minmax(0, 1fr); }
+.table.commands p { grid-template-columns: 2ch 11ch minmax(0, 1fr); }
 .table.options p { grid-template-columns: 2ch minmax(0, 1fr); }
 .table span:first-child { text-align: right; color: var(--dim); }
 .table.commands span:nth-child(2) { color: var(--accent); font-weight: 700; }
