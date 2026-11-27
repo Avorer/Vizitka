@@ -59,6 +59,7 @@
     { name: "about", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
       title("ОБО МНЕ");
       SITE.bio.forEach(t => line(t));
+      print(el("p", {}, link(SITE.passport.url, SITE.passport.name + " ↗")));
       print(el("p", { className: "dim" }, "Мои работы: ", kbd("portfolio"), ". Нужен сайт: ", kbd("order"), "."));
     } },
     { name: "portfolio", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
@@ -112,7 +113,7 @@
     if (c.telegram) list.push({ label: "Telegram", url: c.telegram, text: short(c.telegram), order: true });
     if (c.email) list.push({ label: "Почта", url: "mailto:" + c.email, text: c.email, order: true });
     if (c.github) list.push({ label: "GitHub", url: c.github, text: short(c.github) });
-    if (c.team) list.push({ label: "Канал РАСХОД", url: c.team, text: short(c.team) });
+    if (c.rashod) list.push({ label: "РАСХОД", url: c.rashod, text: "команда-расход.рф — мой профиль" });
     return list;
   }
 
@@ -132,7 +133,7 @@
   function startOrder() {
     order = { step: 0 };
     title("ЗАКАЗ ВЕБ-ВЁРСТКИ");
-    line("Три коротких вопроса — и получишь готовую заявку. Выйти: cancel (отмена).");
+    line("Три коротких вопроса — и заявку можно отправить прямо отсюда. Выйти: cancel (отмена).");
     ask();
   }
 
@@ -141,11 +142,14 @@
       line("1/3. Что нужно? Введи номер или напиши своими словами:");
       print(table(SITE.services.map((s, i) => [String(i + 1), s]), "options"));
     } else if (order.step === 1) line("2/3. Опиши задачу в паре предложений:");
-    else line("3/3. Как тебя зовут и куда тебе ответить?");
+    else if (order.step === 2) line("3/3. Как тебя зовут и куда тебе ответить (Telegram или почта)?");
+    else print(el("p", {}, "Отправить заявку? Напиши ", kbd("да"), " или ", kbd("нет"), "."));
     setMode();
   }
 
   function answer(text) {
+    if (order.sending) return line("Подожди, заявка ещё отправляется…", "dim");
+    if (order.step === 3) return confirmOrder(text);
     if (order.step === 0) order.type = /^\d+$/.test(text) ? SITE.services[Number(text) - 1] : text;
     else if (order.step === 1) order.task = text;
     else order.who = text;
@@ -154,19 +158,65 @@
     if (order.step < 3) return ask();
 
     message = "Привет! Хочу заказать вёрстку.\nЧто нужно: " + order.type + "\nЗадача: " + order.task + "\nОтветить: " + order.who;
-    order = null;
-    setMode();
-    line("Готово! Вот твоя заявка:", "ok");
+    line("Проверь заявку:", "ok");
     print(el("pre", { className: "message", textContent: message }));
-    print(el("p", {}, "Набери ", kbd("copy"), ", чтобы скопировать её."));
-    const direct = contactList().filter(c => c.order);
-    direct.forEach(c => {
-      const url = c.url.startsWith("mailto:") ? c.url + "?subject=" + encodeURIComponent("Заказ вёрстки") + "&body=" + encodeURIComponent(message) : c.url;
-      print(el("p", {}, "Отправить (" + c.label + "): ", link(url, c.text)));
-    });
-    line(direct.length
-      ? "Заявка сама никуда не отправляется: скопируй её и пришли мне."
-      : "Заявка сама никуда не отправляется. Личный контакт для заказов скоро появится здесь.", "dim");
+    line("Она уйдёт мне через сервис Formspree.", "dim");
+    ask();
+  }
+
+  function confirmOrder(text) {
+    const word = normalize(text);
+    const said = list => [word, swap(word, EN, RU), swap(word, RU, EN)].some(v => list.includes(v));
+    if (said(["copy", "копировать", "скопировать"])) return copyMessage();
+    if (said(["да", "д", "yes", "y", "send", "отправить"])) return send();
+    if (said(["нет", "н", "no", "n"])) {
+      order = null;
+      setMode();
+      return print(el("p", {}, "Заявка не отправлена. Текст можно забрать командой ", kbd("copy"), "."));
+    }
+    ask();
+  }
+
+  async function send() {
+    const current = order, target = block; // ответ придёт позже, пишем его под этой же командой
+    const say = (cls, ...kids) => {
+      target.append(el("p", { className: cls }, ...kids));
+      screen.scrollTop = screen.scrollHeight;
+    };
+    current.sending = true;
+    line("Отправляю…", "dim");
+
+    const data = { _subject: "Заявка на сайт с avorerx.ru", "Что нужно": current.type, "Задача": current.task, "Как ответить": current.who };
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(current.who)) data.email = current.who; // чтобы можно было ответить письмом
+    const abort = new AbortController();
+    const timeout = setTimeout(() => abort.abort(), 15000);
+    let sent = false;
+    try {
+      const response = await fetch(SITE.form, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(data),
+        signal: abort.signal
+      });
+      sent = response.ok;
+    } catch (e) { sent = false; }
+    clearTimeout(timeout);
+    current.sending = false;
+    if (order !== current) { // заказ отменили, пока шла отправка
+      if (sent) say("ok", "Предыдущая заявка всё же успела отправиться.");
+      return;
+    }
+
+    if (sent) {
+      order = null;
+      setMode();
+      say("ok", "✓ Заявка отправлена! Я отвечу по указанному контакту.");
+    } else {
+      say("error", "Не получилось отправить заявку.");
+      say("", "Напиши ", kbd("да"), ", чтобы попробовать ещё раз, или ", kbd("нет"), ", чтобы выйти.");
+      const tg = SITE.contacts.telegram;
+      if (tg) say("dim", "Можно написать напрямую: ", link(tg, tg.replace(/^https?:\/\//, "")));
+    }
   }
 
   /* ---------- разбор ввода ---------- */

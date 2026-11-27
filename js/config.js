@@ -6,20 +6,24 @@ window.SITE = {
   // строки раздела «о себе»
   bio: [
     "AvorerInc — моя визитка в сети.",
-    "Я в команде РАСХОД — это казанские стритовики."
+    "Веб-программист со стажем в 5 лет."
   ],
 
+  // документ в разделе «о себе»
+  passport: { name: "Паспорт компетенций (PDF)", url: "files/passport-kompetenciy.pdf" },
+
+  // сюда уходят заявки с сайта (https://formspree.io)
+  form: "https://formspree.io/f/mppdewjq",
+
   contacts: {
-    telegram: "", // личный Telegram для заказов, например "https://t.me/username"
-    email: "",    // почта, например "name@mail.ru"
+    telegram: "https://t.me/Avorer",
+    email: "", // почта, например "name@mail.ru"
     github: "https://github.com/Avorer",
-    team: "https://t.me/raskhoddd" // канал команды РАСХОД
+    rashod: "https://xn----7sbabrd0bqkhhwo0d.xn--p1ai/drivers/alex.html" // профиль в РАСХОД
   },
 
   projects: [
-    { name: "Сайт команды РАСХОД", about: "Лидерборд, гонщики и новости", url: "https://команда-расход.рф" },
-    { name: "Набор в РАСХОД", about: "Страница набора в команду", url: "https://avorer.github.io/RASHOD-join/" },
-    { name: "Эта визитка", about: "Сайт-терминал: ты сейчас в нём", url: "https://github.com/Avorer/Vizitka" }
+    { name: "Сайт команды РАСХОД", about: "Лидерборд, гонщики и новости", url: "https://команда-расход.рф" }
   ],
 
   // что можно выбрать при заказе
