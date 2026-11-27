@@ -64,11 +64,11 @@
   }
 
   function draw() {
-    ctx.fillStyle = "#0a0214";
+    ctx.fillStyle = "#050806";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // сетка
-    ctx.strokeStyle = "rgba(139, 47, 201, .18)";
+    ctx.strokeStyle = "rgba(76, 240, 138, .09)";
     ctx.lineWidth = 1;
     for (let i = 0; i <= CELLS; i++) {
       ctx.beginPath(); ctx.moveTo(i * SIZE, 0); ctx.lineTo(i * SIZE, canvas.height); ctx.stroke();
@@ -76,16 +76,16 @@
     }
 
     // еда
-    ctx.shadowColor = "#ff8a1f";
+    ctx.shadowColor = "#ffd166";
     ctx.shadowBlur = 12;
-    ctx.fillStyle = "#ff8a1f";
+    ctx.fillStyle = "#ffd166";
     ctx.fillRect(food.x * SIZE + 4, food.y * SIZE + 4, SIZE - 8, SIZE - 8);
 
     // змейка
     snake.forEach((s, i) => {
-      ctx.shadowColor = "#b565f0";
+      ctx.shadowColor = "#35c870";
       ctx.shadowBlur = i === 0 ? 14 : 6;
-      ctx.fillStyle = i === 0 ? "#ffb347" : "#b565f0";
+      ctx.fillStyle = i === 0 ? "#8dffb8" : "#35c870";
       ctx.fillRect(s.x * SIZE + 1, s.y * SIZE + 1, SIZE - 2, SIZE - 2);
     });
     ctx.shadowBlur = 0;
@@ -122,6 +122,7 @@
   }
 
   document.addEventListener("keydown", e => {
+    if (!document.body.classList.contains("game-open")) return; // иначе клавиши нужны терминалу
     if (e.ctrlKey || e.metaKey || e.altKey) return; // не мешаем горячим клавишам браузера
     // e.code означает саму клавишу, поэтому WASD работает и в русской раскладке
     const map = {
@@ -148,7 +149,7 @@
   overlay.addEventListener("click", toggle);
 
   // свайпы по полю
-  const screenEl = document.querySelector(".screen");
+  const screenEl = document.querySelector(".field");
   let touchStart = null;
   screenEl.addEventListener("touchstart", e => {
     const t = e.changedTouches[0];
@@ -170,6 +171,9 @@
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && state === "play") pause();
   });
+
+  // окно игры закрыли — ставим на паузу
+  document.addEventListener("game:close", () => { if (state === "play") pause(); });
 
   reset();
   showOverlay(isTouch ? "ТАПНИ,<br>ЧТОБЫ ИГРАТЬ" : "НАЖМИ ПРОБЕЛ");

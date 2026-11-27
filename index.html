@@ -2,91 +2,67 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#12041f">
-  <title>AvorerInc</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0b0f0c">
+  <meta name="description" content="AvorerInc: портфолио, контакты и заказ веб-вёрстки">
+  <title>AvorerInc — терминал</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:ital,wght@0,500;0,700;1,900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v3">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v5">
 </head>
 <body>
-  <!-- фон: закат, горы и неоновая сетка -->
-  <div class="scene" aria-hidden="true">
-    <div class="stars"></div>
-    <div class="sun"></div>
-    <svg class="mountains" viewBox="0 0 1440 200" preserveAspectRatio="none">
-      <path d="M0 200V140L110 80l70 45 120-95 110 110 60-35 80 55h340l90-70 70 40 130-105 120 120 60-30 80 55v50Z"/>
-    </svg>
-    <div class="floor"><div class="grid-floor"></div></div>
-  </div>
+  <div class="window" id="window">
+    <header class="bar">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h1>гость@avorer: ~</h1>
+      <button id="music" class="music" type="button" aria-pressed="false" aria-label="Музыка">♫ <span>ВЫКЛ</span></button>
+    </header>
 
-  <div class="page">
-    <section class="intro">
-      <header class="hero">
-        <h1 class="logo">AvorerInc</h1>
-      </header>
-
-      <footer class="sign">
-        <!-- картонный замок и его жилец -->
-        <svg class="castle" viewBox="0 0 240 170" role="img" aria-label="Кот в картонном замке">
-          <g class="box">
-            <path d="M20 62h12V50h12v12h10V50h12v12h6v103H20Z"/>
-            <path d="M168 62h6V50h12v12h10V50h12v12h12v103h-52Z"/>
-            <path d="M72 92h14V80h16v12h12V80h12v12h12V80h16v12h14v73H72Z"/>
-          </g>
-          <path class="door" d="M92 165v-30a28 28 0 0 1 56 0v30Z"/>
-          <g class="cat">
-            <path class="tail" d="M138 160c22 2 28-14 20-24"/>
-            <path class="fur" d="M101 165c0-18 7-27 19-27s19 9 19 27Z"/>
-            <path class="fur" d="M103 134l-1-24 13 10h10l13-10-1 24c0 22-34 22-34 0Z"/>
-            <g class="eyes"><ellipse cx="113" cy="133" rx="3.5" ry="4.5"/><ellipse cx="127" cy="133" rx="3.5" ry="4.5"/></g>
-            <path class="nose" d="M117 140h6l-3 4Z"/>
-            <path class="whisk" d="M110 142l-18-3M110 146l-17 3M130 142l18-3M130 146l17 3"/>
-          </g>
-          <path class="tape" d="M24 92l44-8 3 12-44 8ZM172 112l44 7-2 12-44-7Z"/>
-          <path class="flag-pole" d="M43 50V16M197 50V16"/>
-          <path class="flag" d="M43 16l26 8-26 9ZM197 16l26 8-26 9Z"/>
-        </svg>
-        <p class="note">
-          Хочешь творить — твори! Твоя фантазия безгранична! А если перегорел, то займись делом,
-          которое тебе нравится: например, построй своему пушистому другу картонный замок
-          или котокафешку. Только не мучай пушистика ;)
-        </p>
-      </footer>
-    </section>
-
-    <main class="cabinet">
-      <div class="marquee" aria-hidden="true">ЗМЕЙКА</div>
-
-      <div class="hud">
-        <span>СЧЁТ<b id="score">0</b></span>
-        <button id="music" class="music" type="button" aria-pressed="false" aria-label="Музыка">♫ <span>ВЫКЛ</span></button>
-        <span>РЕКОРД<b id="best">0</b></span>
-      </div>
-
-      <div class="screen">
-        <canvas id="game" width="400" height="400" aria-label="Игра «Змейка»"></canvas>
-        <div id="overlay" class="overlay">
-          <p id="overlay-text">НАЖМИ ПРОБЕЛ</p>
-        </div>
-      </div>
-
-      <div class="deck">
-        <p class="help help-pc"><kbd>←↑↓→</kbd> или <kbd>WASD</kbd> — управление<br><kbd>Пробел</kbd> — старт / пауза</p>
-        <p class="help help-touch">Свайпай по полю или жми кнопки<br>Тап по экрану — старт / пауза</p>
-
-        <div class="pad" aria-label="Кнопки управления">
-          <button data-dir="up" class="b-up" aria-label="Вверх">▲</button>
-          <button data-dir="left" class="b-left" aria-label="Влево">◀</button>
-          <button data-dir="down" class="b-down" aria-label="Вниз">▼</button>
-          <button data-dir="right" class="b-right" aria-label="Вправо">▶</button>
-        </div>
-      </div>
+    <main class="screen" id="screen">
+      <div id="out" role="log" aria-live="polite"></div>
+      <noscript>
+        <p>Для терминала нужен JavaScript. Проекты:</p>
+        <p><a href="https://команда-расход.рф">Сайт команды РАСХОД</a><br><a href="https://avorer.github.io/RASHOD-join/">Набор в РАСХОД</a><br><a href="https://github.com/Avorer">GitHub</a></p>
+      </noscript>
+      <form class="line" id="form" autocomplete="off">
+        <label for="cmd" id="prompt">гость@avorer:~$</label>
+        <input id="cmd" type="text" enterkeyhint="send" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="напиши help">
+      </form>
     </main>
+
+    <nav class="chips" id="chips" aria-label="Быстрые команды"></nav>
   </div>
 
-  <script src="js/script.js?v3"></script>
+  <!-- окно игры: открывается командой snake -->
+  <section class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Игра «Змейка»" hidden>
+    <div class="game">
+      <div class="bar">
+        <h2>./snake</h2>
+        <button type="button" class="close" id="close">выйти ✕</button>
+      </div>
+      <div class="hud">
+        <span>СЧЁТ <b id="score">0</b></span>
+        <span>РЕКОРД <b id="best">0</b></span>
+      </div>
+      <div class="field">
+        <canvas id="game" width="400" height="400" aria-label="Игровое поле"></canvas>
+        <div id="overlay" class="overlay"><p id="overlay-text">НАЖМИ ПРОБЕЛ</p></div>
+      </div>
+      <p class="help help-pc">Стрелки или WASD — управление · Пробел — старт / пауза · Esc — выход</p>
+      <p class="help help-touch">Свайпай по полю или жми кнопки</p>
+      <div class="pad" aria-label="Кнопки управления">
+        <button data-dir="up" class="b-up" aria-label="Вверх">▲</button>
+        <button data-dir="left" class="b-left" aria-label="Влево">◀</button>
+        <button data-dir="down" class="b-down" aria-label="Вниз">▼</button>
+        <button data-dir="right" class="b-right" aria-label="Вправо">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/config.js?v1"></script>
+  <script src="js/script.js?v5"></script>
   <script src="js/music.js?v1"></script>
+  <script src="js/terminal.js?v1"></script>
 </body>
 </html>
