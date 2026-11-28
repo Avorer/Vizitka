@@ -624,7 +624,8 @@
      с первым нажатием клавиши или кликом. Вышел по Esc — вернётся со следующей
      командой. Выключил командой fullscreen off — не навязываем. */
   function isFullscreen() { // своим режимом или клавишей F11
-    return Boolean(document.fullscreenElement) || window.innerHeight >= window.screen.height;
+    // высоту окна с высотой экрана не сравниваем: при уменьшенном масштабе страницы это врёт
+    return Boolean(document.fullscreenElement) || window.matchMedia("(display-mode: fullscreen)").matches;
   }
 
   function enterFullscreen() {
@@ -638,9 +639,15 @@
       if (e.type === "keydown") { // служебные клавиши и сочетания не считаются
         if (e.ctrlKey || e.metaKey || e.altKey || !(e.key.length === 1 || e.key === "Enter")) return;
       } else if (e.target.closest("a")) return; // ссылки открываются как обычно
-      events.forEach(n => document.removeEventListener(n, first, true));
-      if (!isFullscreen()) enterFullscreen();
+      if (keepFullscreen && !isFullscreen()) enterFullscreen();
     };
+    // пока режим ни разу не включился, пробуем на каждом нажатии
+    const stop = () => {
+      if (!document.fullscreenElement) return;
+      events.forEach(n => document.removeEventListener(n, first, true));
+      document.removeEventListener("fullscreenchange", stop);
+    };
+    document.addEventListener("fullscreenchange", stop);
     events.forEach(n => document.addEventListener(n, first, true));
   }
 
