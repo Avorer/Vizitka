@@ -55,6 +55,9 @@ a { color: var(--second); text-underline-offset: 3px; overflow-wrap: anywhere; }
 /* строка ввода: настоящее поле прозрачно и лежит поверх нарисованного текста */
 .line { position: relative; min-height: 1.65em; overflow-wrap: anywhere; }
 .typed { white-space: pre-wrap; }
+.suggest { display: flex; flex-wrap: wrap; gap: 2px 2ch; margin-top: 4px; color: var(--dim); }
+.suggest span { padding: 0 .5ch; }
+.suggest .current { background: var(--accent); color: var(--bg); font-weight: 700; }
 .line.busy label, .line.busy .typed { visibility: hidden; }
 .progress { margin: 2px 0 8px; }
 .bar-cells { color: var(--accent); letter-spacing: 0; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; }

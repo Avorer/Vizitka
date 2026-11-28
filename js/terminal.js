@@ -132,7 +132,7 @@
     line("Доступные команды:");
     print(table(COMMANDS.map((c, i) => [String(i + 1), c.name, c.ru]), "commands"));
     line("Набери команду и нажми Enter. Можно по-английски, по-русски или номером.", "dim");
-    if (finePointer) line("Tab — дописать, ↑ ↓ — история, Ctrl+L — очистить.", "dim");
+    if (finePointer) line("Tab — дописать и перелистать варианты, ↑ ↓ — история, Ctrl+L — очистить.", "dim");
   }
 
   function contactList() {
@@ -152,10 +152,31 @@
   function copyMessage() {
     if (!message) return print(el("p", {}, "Копировать пока нечего. Сначала оформи заявку: ", kbd("order")));
     const target = block; // ответ придёт позже, пишем его под этой же командой
-    const done = ok => target.append(el("p", { className: ok ? "ok" : "error",
-      textContent: ok ? "заявка скопирована в буфер обмена" : "не получилось скопировать: выдели текст заявки вручную" }));
-    if (navigator.clipboard) navigator.clipboard.writeText(message).then(() => done(true), () => done(false));
-    else done(false);
+    const done = ok => {
+      target.append(el("p", { className: ok ? "ok" : "error",
+        textContent: ok ? "✓ заявка скопирована в буфер обмена" : "не получилось скопировать: выдели текст заявки ниже вручную" }));
+      if (!ok) target.append(el("pre", { className: "message", textContent: message }));
+      screen.scrollTop = screen.scrollHeight;
+    };
+    // navigator.clipboard есть только на https и не везде разрешён
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(message).then(() => done(true), () => done(oldCopy()));
+    else done(oldCopy());
+  }
+
+  // старый способ: временное поле с текстом и команда «копировать»
+  function oldCopy() {
+    const focused = document.activeElement;
+    const area = el("textarea", { value: message, className: "sr" });
+    area.setAttribute("readonly", ""); // чтобы на телефоне не выскакивала клавиатура
+    document.body.append(area);
+    area.focus({ preventScroll: true });
+    area.select();
+    area.setSelectionRange(0, message.length);
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    area.remove();
+    if (focused && focused.focus) focused.focus({ preventScroll: true });
+    return ok;
   }
 
   function startOrder() {
@@ -173,7 +194,7 @@
     else if (order.step === 2) line("3/3. Как тебя зовут и куда тебе ответить (Telegram или почта)?");
     else print(el("p", {}, "Отправить заявку? Напиши ", kbd("да"), " или ", kbd("нет"), "."));
     print(el("p", { className: "exit" }, "Выйти из заказа: ", hl("cancel"), " или ", hl("отмена"),
-      finePointer ? el("span", { className: "dim", textContent: "  (Tab допишет)" }) : null));
+      finePointer ? el("span", { className: "dim", textContent: "  (Tab допишет и перелистает)" }) : null));
     setMode();
   }
 
@@ -435,7 +456,54 @@
     if (!e.target.closest("a, input") && !String(getSelection())) input.focus({ preventScroll: true });
   });
 
+  /* ---------- Tab: дописать и перелистывать ---------- */
+  let cycle = null; // { list, index }, пока человек листает варианты
+  const suggest = el("p", { className: "suggest", hidden: true });
+  suggest.setAttribute("aria-live", "polite");
+  form.after(suggest);
+
+  function endCycle() {
+    cycle = null;
+    suggest.hidden = true;
+  }
+
+  function variants(typed) {
+    if (order) { // в заказе листаем слова, которые там понимаются
+      const words = order.step === 3 ? ["да", "нет", "copy", "cancel", "отмена"] : ["cancel", "отмена"];
+      return words.filter(w => w.startsWith(typed));
+    }
+    const english = COMMANDS.map(c => c.name).filter(name => name.startsWith(typed));
+    if (english.length) return english;
+    const russian = COMMANDS.flatMap(c => c.alias).filter(a => /^[а-я]+$/.test(a) && a !== "осебе" && a !== "полныйэкран");
+    return russian.filter(a => a.startsWith(typed.replace(/ё/g, "е")));
+  }
+
+  function complete(e) {
+    const step = e.shiftKey ? -1 : 1;
+    if (cycle && input.value === cycle.list[cycle.index]) {
+      cycle.index = (cycle.index + step + cycle.list.length) % cycle.list.length;
+    } else {
+      if (e.shiftKey) return; // вне перебора Shift+Tab работает как обычно
+      const typed = input.value.toLowerCase().replace(/^[\s\/]+/, "");
+      const list = variants(typed);
+      if (!list.length) {
+        if (input.value) e.preventDefault(); // курсор остаётся в строке
+        return endCycle();
+      }
+      cycle = { list, index: 0 };
+    }
+    e.preventDefault();
+    setValue(cycle.list[cycle.index]);
+    // как в консоли, показываем все варианты и отмечаем текущий
+    suggest.replaceChildren(...cycle.list.map((word, i) => el("span", { textContent: word, className: i === cycle.index ? "current" : "" })));
+    suggest.hidden = cycle.list.length < 2;
+    if (!suggest.hidden) screen.scrollTop = screen.scrollHeight;
+  }
+
+  input.addEventListener("input", endCycle);
+
   input.addEventListener("keydown", e => {
+    if (!["Tab", "Shift"].includes(e.key)) endCycle();
     if (busy) {
       if (e.ctrlKey && e.code === "KeyC") {
         e.preventDefault();
@@ -460,16 +528,8 @@
       setMode();
       setValue("");
       screen.scrollTop = screen.scrollHeight;
-    } else if (e.key === "Tab" && order && input.value && !e.shiftKey) {
-      e.preventDefault(); // курсор остаётся в строке
-      const start = input.value.toLowerCase().trimStart();
-      const words = ["cancel", "отмена"].concat(order.step === 3 ? ["да", "нет", "copy"] : []);
-      const match = words.find(w => w.startsWith(start));
-      if (match) setValue(match);
-    } else if (e.key === "Tab" && input.value && !e.shiftKey && !order) {
-      const start = normalize(input.value);
-      const match = COMMANDS.find(c => c.name.startsWith(start)) || COMMANDS.find(c => normalize(c.ru).startsWith(start));
-      if (match && match.name !== start) { e.preventDefault(); setValue(match.name); }
+    } else if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
+      complete(e);
     }
   });
 
