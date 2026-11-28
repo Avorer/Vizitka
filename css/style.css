@@ -60,6 +60,7 @@ a { color: var(--second); text-underline-offset: 3px; overflow-wrap: anywhere; }
 .suggest .current { background: var(--accent); color: var(--bg); font-weight: 700; }
 .line.busy label, .line.busy .typed { visibility: hidden; }
 .progress { margin: 2px 0 8px; }
+.bar-cells.error { color: var(--error); }
 .bar-cells { color: var(--accent); letter-spacing: 0; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; }
 .progress p:nth-child(2) { white-space: pre; }
 .services { margin: 2px 0 8px; }

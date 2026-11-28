@@ -16,7 +16,7 @@
   const after = document.getElementById("after");
   const finePointer = window.matchMedia("(pointer: fine)").matches;
   let user = "гость"; // вместо него подставится IP посетителя
-  const prompt = () => user + "@avorer:~$";
+  const prompt = () => user + "@user:~$";
   const THEMES = ["green", "amber", "white", "synth"];
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -62,47 +62,50 @@
 
   /* ---------- команды ---------- */
   const COMMANDS = [
-    { name: "about", load: "Загрузка информации обо мне", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
+    { name: "about", tab: "обо мне", load: "Загрузка информации обо мне", ru: "обо мне", alias: ["bio", "био", "осебе"], run() {
       title("ОБО МНЕ");
       SITE.bio.forEach(t => line(t));
       print(el("p", {}, link(SITE.passport.url, SITE.passport.name + " ↗")));
       print(el("p", { className: "dim" }, "Мои работы: ", kbd("portfolio"), ". Нужен сайт: ", kbd("order"), "."));
     } },
-    { name: "portfolio", load: "Загрузка портфолио", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
+    { name: "portfolio", tab: "портфолио", load: "Загрузка портфолио", ru: "портфолио", alias: ["work", "projects", "ls", "работы", "проекты"], run() {
       title("ПОРТФОЛИО");
       print(el("ol", { className: "projects" }, ...SITE.projects.map(p =>
         el("li", {}, link(p.url, p.name + " ↗"), el("span", { textContent: p.about })))));
       print(el("p", { className: "dim" }, "Хочешь так же? Набери ", kbd("order"), "."));
     } },
-    { name: "order", load: "Установка модуля заказа", ru: "заказать вёрстку", alias: ["заказ", "заказать", "верстка", "сайт", "buy"], run: startOrder },
-    { name: "contacts", load: "Загрузка контактной информации", ru: "контакты", alias: ["contact", "связь"], run() {
+    { name: "order", tab: "заказать", load: "Установка модуля заказа", ru: "заказать вёрстку", alias: ["заказ", "заказать", "верстка", "сайт", "buy"], run: startOrder },
+    { name: "contacts", tab: "контакты", load: "Загрузка контактной информации", ru: "контакты", alias: ["contact", "связь"], run() {
       title("КОНТАКТЫ");
       const list = el("ul", { className: "contacts" });
       contactList().forEach(c => list.append(el("li", {}, el("span", { textContent: c.label }), link(c.url, c.text))));
       print(list);
     } },
-    { name: "creative", load: "Загрузка вдохновения", ru: "про творчество", alias: ["творить", "творчество", "cat", "кот"], run() {
+    { name: "creative", tab: "творчество", load: "Загрузка вдохновения", ru: "про творчество", alias: ["творить", "творчество", "cat", "кот"], run() {
       title("ТВОРИ");
       print(el("pre", { className: "cat", textContent: " /\\_/\\\n( o.o )\n > ^ <" }));
       line("Хочешь творить — твори! Твоя фантазия безгранична! А если перегорел, то займись делом, которое тебе нравится: например, построй своему пушистому другу картонный замок или котокафешку. Только не мучай пушистика ;)", "note");
     } },
-    { name: "snake", services: ["Инициализация графического буфера", "Запущена служба input.service (клавиши и свайпы)", "Запущена служба score.service (счёт и рекорд)", "Запущен процесс ./snake"], ru: "игра «змейка»", alias: ["game", "play", "игра", "играть", "змейка"], run: openGame },
-    { name: "music", load: "Загрузка аудиомодуля", instant: true, ru: "музыка on / off", alias: ["музыка"], run(arg) {
+    { name: "snake", tab: "змейка", services: ["Инициализация графического буфера", "Запущена служба input.service (клавиши и свайпы)", "Запущена служба score.service (счёт и рекорд)", "Запущен процесс ./snake"], ru: "игра «змейка»", alias: ["game", "play", "игра", "играть", "змейка"], run: openGame },
+    { name: "music", tab: "музыка", load: "Загрузка аудиомодуля", instant: true, ru: "музыка on / off", alias: ["музыка"], run(arg) {
       const music = window.SynthMusic;
       if (!music.set) return line("Этот браузер не умеет играть такую музыку.", "error");
       const want = /^(on|вкл)/.test(arg) ? true : /^(off|stop|выкл|стоп)/.test(arg) ? false : !music.isOn();
       music.set(want);
       print(want ? el("p", {}, "♫ играет synthwave… выключить: ", kbd("music off")) : el("p", { textContent: "музыка выключена" }));
     } },
-    { name: "theme", load: "Установка темы", ru: "цвет терминала", alias: ["тема", "цвет", "color"], run(arg) {
+    { name: "theme", tab: "тема", load: "Установка темы", ru: "цвет терминала", alias: ["тема", "цвет", "color"], run(arg) {
       const current = document.documentElement.dataset.theme || "green";
       const next = THEMES.includes(arg) ? arg : THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
       setTheme(next);
       line("тема: " + next);
       line("доступные: " + THEMES.join(", ") + " (пример: theme amber)", "dim");
     } },
-    { name: "copy", load: "Копирование заявки", instant: true, ru: "скопировать заявку", alias: ["копировать", "скопировать"], run: copyMessage },
-    { name: "fullscreen", load: "Настройка режима экрана", instant: true, ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
+    { name: "copy", tab: "копировать", load: "Копирование заявки", instant: true, ru: "скопировать заявку", alias: ["копировать", "скопировать"], run() {
+      const target = block; // ответ придёт позже, пишем его под этой же командой
+      return copyMessage().then(error => ({ error, show: () => reportCopy(error, target) }));
+    } },
+    { name: "fullscreen", tab: "экран", load: "Настройка режима экрана", instant: true, ru: "полный экран on / off", alias: ["full", "экран", "полныйэкран"], pc: true, run(arg) {
       const active = Boolean(document.fullscreenElement);
       const want = /^(on|вкл)/.test(arg) ? true : /^(off|выкл)/.test(arg) ? false : !active;
       keepFullscreen = want; // выключили командой — сами обратно не включаем
@@ -115,8 +118,8 @@
         line("выхожу из полного экрана");
       }
     } },
-    { name: "clear", services: ["Остановлена служба вывода терминала", "Очищен буфер экрана", "Удалена история сеанса на экране", "Запущена служба terminal.service"], ru: "очистить экран", alias: ["cls", "очистить"], run: wipe },
-    { name: "help", load: "Загрузка списка команд", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
+    { name: "clear", tab: "очистить", services: ["Остановлена служба вывода терминала", "Очищен буфер экрана", "Удалена история сеанса на экране", "Запущена служба terminal.service"], ru: "очистить экран", alias: ["cls", "очистить"], run: wipe },
+    { name: "help", tab: "помощь", load: "Загрузка списка команд", ru: "список команд", alias: ["помощь", "команды", "меню", "menu", "?"], run: help }
   ];
 
   let keepFullscreen = true;
@@ -149,18 +152,20 @@
   let order = null;
   let message = "";
 
+  // возвращает обещание: "" — скопировано, иначе текст ошибки
   function copyMessage() {
-    if (!message) return print(el("p", {}, "Копировать пока нечего. Сначала оформи заявку: ", kbd("order")));
-    const target = block; // ответ придёт позже, пишем его под этой же командой
-    const done = ok => {
-      target.append(el("p", { className: ok ? "ok" : "error",
-        textContent: ok ? "✓ заявка скопирована в буфер обмена" : "не получилось скопировать: выдели текст заявки ниже вручную" }));
-      if (!ok) target.append(el("pre", { className: "message", textContent: message }));
-      screen.scrollTop = screen.scrollHeight;
-    };
+    if (!message) return Promise.resolve("копировать нечего");
+    const result = ok => ok ? "" : "буфер обмена недоступен";
     // navigator.clipboard есть только на https и не везде разрешён
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(message).then(() => done(true), () => done(oldCopy()));
-    else done(oldCopy());
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(message).then(() => "", () => result(oldCopy()));
+    return Promise.resolve(result(oldCopy()));
+  }
+
+  function reportCopy(error, target) {
+    if (!error) target.append(el("p", { className: "ok", textContent: "✓ заявка скопирована в буфер обмена" }));
+    else if (!message) target.append(el("p", {}, "Сначала оформи заявку: набери ", kbd("order"), "."));
+    else target.append(el("p", { textContent: "Выдели текст заявки и скопируй вручную:" }), el("pre", { className: "message", textContent: message }));
+    screen.scrollTop = screen.scrollHeight;
   }
 
   // старый способ: временное поле с текстом и команда «копировать»
@@ -218,7 +223,13 @@
   function confirmOrder(text) {
     const word = normalize(text);
     const said = list => [word, swap(word, EN, RU), swap(word, RU, EN)].some(v => list.includes(v));
-    if (said(["copy", "копировать", "скопировать"])) return copyMessage();
+    if (said(["copy", "копировать", "скопировать"])) {
+      const target = block;
+      return copyMessage().then(error => {
+        if (error) target.append(el("p", { className: "error", textContent: "✗ Ошибка: " + error }));
+        reportCopy(error, target);
+      });
+    }
     if (said(["да", "д", "yes", "y", "send", "отправить"])) return send();
     if (said(["нет", "н", "no", "n"])) {
       order = null;
@@ -291,19 +302,28 @@
   }
 
   // полоса загрузки, как при установке модуля в PowerShell
-  async function progress(label, target, task) {
+  async function progress(label, target, task, outcome) {
     const CELLS = 20;
     const bar = el("span", { className: "bar-cells" }), percent = el("span"), status = el("p", { className: "dim" });
     const box = el("div", { className: "progress" }, el("p", { textContent: label }), el("p", {}, bar, percent), status);
     target.append(box);
     const stages = ["Подключение…", "Получение данных…", "Распаковка…", "Проверка…"];
     let value = 0;
+    let failure = "";
+    if (outcome) outcome.then(result => { failure = result.error; });
     while (!task.cancelled) {
       const cells = Math.round(value / 100 * CELLS);
       bar.textContent = "[" + "█".repeat(cells) + "░".repeat(CELLS - cells) + "]";
       percent.textContent = " " + String(value).padStart(3, " ") + "%";
       status.textContent = value < 100 ? stages[Math.min(3, Math.floor(value / 26))] : "✓ Готово";
       toBottom();
+      if (failure && value >= 40) { // обрываемся на середине
+        bar.className = percent.className = "error";
+        status.className = "error";
+        status.textContent = "✗ Ошибка: " + failure;
+        toBottom();
+        return;
+      }
       if (value === 100) break;
       await wait(60 + Math.random() * 60);
       value = Math.min(100, value + 9 + Math.floor(Math.random() * 14));
@@ -330,18 +350,22 @@
   async function launch(command, arg, entry) {
     const task = { cancelled: false };
     setBusy(task);
-    let later = null;
+    let later = null, outcome = null;
     if (command.instant) { // действие выполняем сразу, а ответ показываем после загрузки
       later = el("div");
       block = later;
-      command.run(arg);
+      outcome = command.run(arg) || null; // copy сообщает, получилось ли
     }
     if (command.services) await services(command.services, entry, task);
-    else await progress(command.load, entry, task);
+    else await progress(command.load, entry, task, outcome);
+    const result = outcome && await outcome;
     if (task.cancelled) return;
     setBusy(null);
     block = entry;
-    if (later) entry.append(later);
+    if (later) {
+      entry.append(later);
+      if (result) result.show();
+    }
     else command.run(arg);
     settle(entry);
   }
@@ -392,7 +416,7 @@
       if (!(found && found.command.name === "fullscreen")) restoreFullscreen();
       if (found) return launch(found.command, found.arg, entry);
       else {
-        line("avorer: " + text + ": команда не найдена", "error");
+        line("user: " + text + ": команда не найдена", "error");
         print(el("p", {}, "Набери ", kbd("help"), ", чтобы увидеть список команд."));
       }
     }
@@ -469,13 +493,16 @@
 
   function variants(typed) {
     if (order) { // в заказе листаем слова, которые там понимаются
-      const words = order.step === 3 ? ["да", "нет", "copy", "cancel", "отмена"] : ["cancel", "отмена"];
+      const words = order.step === 3 ? ["да", "нет", "copy", "копировать", "cancel", "отмена"] : ["cancel", "отмена"];
       return words.filter(w => w.startsWith(typed));
     }
-    const english = COMMANDS.map(c => c.name).filter(name => name.startsWith(typed));
-    if (english.length) return english;
-    const russian = COMMANDS.flatMap(c => c.alias).filter(a => /^[а-я]+$/.test(a) && a !== "осебе" && a !== "полныйэкран");
-    return russian.filter(a => a.startsWith(typed.replace(/ё/g, "е")));
+    const start = typed.replace(/ё/g, "е");
+    if (!/[а-я]/.test(start)) return COMMANDS.map(c => c.name).filter(name => name.startsWith(start));
+    // по-русски: у каждой команды своё название, как в английском меню
+    const main = COMMANDS.map(c => c.tab).filter(word => word.startsWith(start));
+    if (main.length) return main;
+    // запасные слова («связь», «био», «проекты»…)
+    return COMMANDS.flatMap(c => c.alias).filter(a => /^[а-я]+$/.test(a) && a !== "осебе" && a !== "полныйэкран" && a.startsWith(start));
   }
 
   function complete(e) {
